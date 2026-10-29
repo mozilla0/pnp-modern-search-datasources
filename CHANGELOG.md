@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.1] - 2026-10-29
+
+### Fixed
+- App catalog validation error ("The 'Name' attribute is invalid … Pattern constraint failed"): solution and feature names now use plain ASCII characters only.
+
+### Changed
+- Solution metadata (name, descriptions, developer website) in English.
+
 ## [2.3.0] - 2026-10-29
 
 ### Added

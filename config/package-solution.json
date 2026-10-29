@@ -1,25 +1,25 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
   "solution": {
-    "name": "PnP Modern Search – Zusätzliche Datenquellen",
+    "name": "PnP Modern Search - Additional Data Sources",
     "id": "5b2c34a5-0e35-4528-89cb-fb1d24599dd3",
-    "version": "2.3.0.0",
+    "version": "2.3.1.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
     "developer": {
-      "name": "PnP Modern Search Erweiterung",
-      "websiteUrl": "",
+      "name": "PnP Modern Search Additional Data Sources",
+      "websiteUrl": "https://github.com/mozilla0/pnp-modern-search-datasources",
       "privacyUrl": "",
       "termsOfUseUrl": "",
       "mpnId": "Undefined-1.23.0"
     },
     "metadata": {
       "shortDescription": {
-        "default": "PnP Modern Search Datenquelle für die Dokumentsuche via SharePoint Search REST API"
+        "default": "Additional data sources and a grouped file type filter for PnP Modern Search v4"
       },
       "longDescription": {
-        "default": "Erweiterungsbibliothek für PnP Modern Search v4. Stellt eine Datenquelle bereit, die Dokumente über /_api/search/postquery sucht und Verfeinerer serverseitig über den gesamten Index berechnet – ohne 5000-Elemente-Schwellenwert."
+        "default": "Extensibility library for PnP Modern Search v4. Adds the data sources REST document search (SharePoint Search), OData (Microsoft Graph, SharePoint REST, Entra ID secured and anonymous APIs), SharePoint CAML and static data, plus a grouped file type filter with icons."
       },
       "screenshotPaths": [],
       "videoUrl": "",
@@ -27,10 +27,10 @@
     },
     "features": [
       {
-        "title": "PnP REST-Dokumentsuche",
-        "description": "Erweiterungsbibliothek für PnP Modern Search",
+        "title": "PnP Modern Search - Additional Data Sources",
+        "description": "Extensibility library for PnP Modern Search v4",
         "id": "25a45733-1f5c-4338-bff7-d6f8ab2a582f",
-        "version": "2.3.0.0"
+        "version": "2.3.1.0"
       }
     ]
   },
