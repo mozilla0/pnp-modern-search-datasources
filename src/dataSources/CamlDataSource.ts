@@ -116,8 +116,15 @@ export class CamlDataSource extends BaseExtDataSource<ICamlProperties> {
     let xml: string = this.resolveBuiltinTokens(this.properties.camlQuery || DEFAULT_CAML, ctx, this._xmlEscape);
     xml = (await this.resolvePnPTokens(xml)).trim();
 
-    if (!/^<View[\s>]/i.test(xml)) {
-      xml = /^<Query[\s>]/i.test(xml) ? `<View>${xml}</View>` : `<View><Query>${xml}</Query></View>`;
+    // Accept a whole <View>, a <Query>, a <Where> or only the content of <Where>
+    if (/^<Query[\s>]/i.test(xml)) {
+      xml = `<View>${xml}</View>`;
+    } else if (/^<Where[\s>]/i.test(xml)) {
+      xml = `<View><Query>${xml}</Query></View>`;
+    } else if (xml && !/^<View[\s>]/i.test(xml)) {
+      xml = `<View><Query><Where>${xml}</Where></Query></View>`;
+    } else if (!xml) {
+      xml = '<View><Query /></View>';
     }
 
     const doc: Document = new DOMParser().parseFromString(xml, 'text/xml');

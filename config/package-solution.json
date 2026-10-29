@@ -3,7 +3,7 @@
   "solution": {
     "name": "PnP Modern Search - Additional Data Sources",
     "id": "5b2c34a5-0e35-4528-89cb-fb1d24599dd3",
-    "version": "2.3.2.0",
+    "version": "2.3.3.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -30,7 +30,7 @@
         "title": "PnP Modern Search - Additional Data Sources",
         "description": "Extensibility library for PnP Modern Search v4",
         "id": "25a45733-1f5c-4338-bff7-d6f8ab2a582f",
-        "version": "2.3.2.0"
+        "version": "2.3.3.0"
       }
     ]
   },

@@ -45,7 +45,7 @@ m365 spo serviceprincipal grant add --resource '<App-Name>' --scope 'user_impers
 
 ## Konfiguration
 
-Die Einstellungen sind in der [englischen README](README.md#configuration) ausführlich beschrieben; im Eigenschaftenbereich erscheinen sie auf Deutsch. Kurzüberblick:
+Die Einstellungen sind in der [englischen README](README.md#configuration) ausführlich beschrieben, Beispiele folgen weiter unten; im Eigenschaftenbereich erscheinen sie auf Deutsch. Kurzüberblick:
 
 - **Gemeinsam (OData, CAML, statische Daten):** Standardsortierung, sortierbare Felder für Benutzer, «Daten nicht beim Laden abrufen», Cache der ersten Seite, Felder für Vorlagen-Slots.
 - **Tokens:** `{searchTerms}`, `{itemsCountPerPage}`, `{startRow}`, `{pageNumber}`, `{filter}`, `{sortField}`, `{sortDirection}`, `{Site}`, `{SiteCollection}` und alle PnP-Tokens.
@@ -53,6 +53,197 @@ Die Einstellungen sind in der [englischen README](README.md#configuration) ausf�
 - **OData:** API-Typ, URL, Header, Body; Paging dynamisch (nextLink oder Tokens) oder statisch; Filter clientseitig oder als `$filter`.
 - **SharePoint CAML:** Website, Liste, View Fields, rekursiv, CAML mit Tokens; Suche, Filter, Sortierung und `RowLimit` werden ergänzt.
 - **Dateityp-Filter:** Filter auf `FileType` (Suche) bzw. `File_x0020_Type` (CAML) anlegen und die Vorlage «Dateitypen mit Symbol (gruppiert)» wählen.
+
+## Beispiele
+
+Die Einstellungen verwenden die Bezeichnungen aus dem Eigenschaftenbereich. Nicht aufgeführte Einstellungen behalten ihren Standardwert.
+
+### REST-Dokumentsuche: Office-Dokumente und PDFs der aktuellen Websitesammlung
+
+Web Part «Search Results», Datenquelle **REST-Dokumentsuche (SharePoint Search)**:
+
+| Einstellung | Wert |
+| --- | --- |
+| Abfragevorlage (KQL) | `{searchTerms} IsDocument:1 Path:"{SiteCollection}" (FileType:docx OR FileType:xlsx OR FileType:pptx OR FileType:pdf)` |
+| Standardsortierung | `LastModifiedTime:desc` |
+| Sortierbare Felder für Benutzer | `LastModifiedTime,Title` |
+
+Web Part «Search Filters» (mit den Ergebnissen verbunden):
+
+| Filterfeld | Vorlage |
+| --- | --- |
+| `FileType` | Dateitypen mit Symbol (gruppiert) |
+| `LastModifiedTime` | Datumsintervall |
+| `DisplayAuthor` | Kontrollkästchen |
+
+Die Zählwerte der Filter gelten für das gesamte Resultat, auch bei Bibliotheken mit weit mehr als 5000 Dokumenten.
+
+### OData – SharePoint REST API: Elemente einer Liste
+
+Datenquelle **OData (Graph, SharePoint REST, API)**:
+
+| Einstellung | Wert |
+| --- | --- |
+| API-Typ | SharePoint REST API |
+| URL | `_api/web/lists/getbytitle('Projekte')/items?$select=Id,Title,Status,Kunde,Modified,FileRef&$top=500` |
+| HTTP-Header (JSON) | `{ "Accept": "application/json;odata=nometadata" }` |
+| Feld mit den Elementen | `value` |
+| Paging | Statisch (Elemente laden, im Browser blättern) |
+| Standardsortierung | `Modified:desc` |
+| Sortierbare Felder für Benutzer | `Title,Modified` |
+| Slots: Titel / Link / Zusammenfassung / Datum | `Title` / `FileRef` / `Kunde` / `Modified` |
+
+Filter auf `Status` und `Kunde` werden im Browser angewendet, inklusive Zählwerte.
+
+### OData – Microsoft Graph: E-Mails des angemeldeten Benutzers
+
+| Einstellung | Wert |
+| --- | --- |
+| API-Typ | Microsoft Graph |
+| URL | `me/messages?$select=subject,bodyPreview,webLink,receivedDateTime,from&$top={itemsCountPerPage}` |
+| Feld mit den Elementen | `value` |
+| Paging | Dynamisch (pro Seite eine Abfrage) |
+| Server-Paging über nextLink verwenden | Ein |
+| Sortierbare Felder für Benutzer | `receivedDateTime,subject` |
+| Slots: Titel / Link / Zusammenfassung / Datum / Autor | `subject` / `webLink` / `bodyPreview` / `receivedDateTime` / `from.emailAddress.name` |
+
+Nötige Berechtigung: `m365 spo serviceprincipal grant add --resource 'Microsoft Graph' --scope 'Mail.Read'`. Das gewählte Sortierfeld wird als `$orderby` übergeben.
+
+### OData – Entra-ID-geschützte API (z. B. Azure Function)
+
+| Einstellung | Wert |
+| --- | --- |
+| API-Typ | Entra-ID-geschützte API |
+| URL | `https://func-contoso.azurewebsites.net/api/contracts?q={searchTermsOrEmpty}&skip={startRow}&top={itemsCountPerPage}&filter={filter}&orderby={sortField}%20{sortDirection}` |
+| Entra-ID-Ressource | `api://11111111-2222-3333-4444-555555555555` |
+| Feld mit den Elementen | `items` |
+| Paging | Dynamisch (pro Seite eine Abfrage) |
+| Server-Paging über nextLink verwenden | Aus |
+| Feld mit der Gesamtanzahl | `total` |
+| Filter anwenden | Serverseitig als OData-$filter |
+
+Erwartete Antwort:
+
+```json
+{
+  "total": 1287,
+  "items": [
+    { "id": "C-1001", "title": "Wartungsvertrag", "status": "Aktiv", "url": "https://…" }
+  ]
+}
+```
+
+Ein gewählter Filter auf `status` wird als `filter=status eq 'Aktiv'` übergeben. Die API muss CORS für die SharePoint-Domain erlauben, und die Berechtigung `user_impersonation` muss erteilt sein (siehe [Installation](#installation)).
+
+### OData – anonyme API
+
+Öffentlicher OData-Demodienst, Paging über Tokens und Filter auf dem Server:
+
+| Einstellung | Wert |
+| --- | --- |
+| API-Typ | Anonym |
+| URL | `https://services.odata.org/V4/TripPinService/People?$count=true&$top={itemsCountPerPage}&$skip={startRow}` |
+| Feld mit den Elementen | `value` |
+| Paging | Dynamisch (pro Seite eine Abfrage) |
+| Server-Paging über nextLink verwenden | Aus |
+| Feld mit der Gesamtanzahl | `@odata.count` |
+| Filter anwenden | Serverseitig als OData-$filter |
+| Slots: Titel / Zusammenfassung / ID | `FirstName` / `UserName` / `UserName` |
+
+### SharePoint CAML: Word- und PDF-Dateien der letzten 30 Tage
+
+| Einstellung | Wert |
+| --- | --- |
+| Website | `/sites/dms` |
+| Liste oder Bibliothek | `/sites/dms/Shared Documents` |
+| In Ordnern rekursiv suchen | Ein |
+| Felder für Suchbegriffe | `Title,FileLeafRef` |
+| Standardsortierung | *(leer – es gilt das `OrderBy` aus dem CAML)* |
+
+CAML:
+
+```xml
+<View>
+  <Query>
+    <Where>
+      <And>
+        <In>
+          <FieldRef Name="File_x0020_Type" />
+          <Values>
+            <Value Type="Text">docx</Value>
+            <Value Type="Text">pdf</Value>
+          </Values>
+        </In>
+        <Geq>
+          <FieldRef Name="Modified" />
+          <Value Type="DateTime"><Today OffsetDays="-30" /></Value>
+        </Geq>
+      </And>
+    </Where>
+    <OrderBy>
+      <FieldRef Name="Modified" Ascending="FALSE" />
+    </OrderBy>
+  </Query>
+</View>
+```
+
+Für die Bibliothek am besten die serverrelative URL verwenden: Sie funktioniert unabhängig von der Sprache der Website. Ab 5000 Elementen müssen `Modified` und `File_x0020_Type` indizierte Spalten sein.
+
+### SharePoint CAML: meine offenen Aufgaben
+
+| Einstellung | Wert |
+| --- | --- |
+| Liste oder Bibliothek | `Aufgaben` |
+| Felder (View Fields, interne Namen) | `ID,Title,Status,DueDate,AssignedTo` |
+| Slots: Titel / Datum / Autor | `Title` / `DueDate` / `AssignedTo[0].title` |
+
+CAML (es genügt der Inhalt von `Where`):
+
+```xml
+<And>
+  <Eq>
+    <FieldRef Name="AssignedTo" LookupId="TRUE" />
+    <Value Type="Integer"><UserID /></Value>
+  </Eq>
+  <Neq>
+    <FieldRef Name="Status" />
+    <Value Type="Text">Erledigt</Value>
+  </Neq>
+</And>
+```
+
+### Statische Daten: Schnelllinks mit Kategorien
+
+Datenquelle **Statische Daten**:
+
+```json
+{
+  "items": [
+    { "linkName": "Microsoft 365 Admin Center", "linkHref": "https://admin.microsoft.com", "category": "Administration" },
+    { "linkName": "SharePoint Admin Center", "linkHref": "https://admin.microsoft.com/sharepoint", "category": "Administration" },
+    { "linkName": "Microsoft Learn", "linkHref": "https://learn.microsoft.com", "category": "Dokumentation" },
+    { "linkName": "PnP Modern Search", "linkHref": "https://microsoft-search.github.io/pnp-modern-search/", "category": "Dokumentation" }
+  ],
+  "numberOfLinks": 4
+}
+```
+
+| Einstellung | Wert |
+| --- | --- |
+| Standardsortierung | `linkName:asc` |
+| Slots: Titel / Link / Zusammenfassung | `linkName` / `linkHref` / `category` |
+
+Ein Web Part «Search Filters» mit dem Filterfeld `category` ergänzt einen Kategorienfilter. `numberOfLinks` steht in eigenen Vorlagen als `{{numberOfLinks}}` zur Verfügung.
+
+### Dateityp-Filter mit beliebiger Datenquelle
+
+Im Web Part «Search Filters» die Library-ID in der Erweiterbarkeits-Konfiguration eintragen und einen Filter anlegen:
+
+| Datenquelle | Filterfeld | Vorlage |
+| --- | --- | --- |
+| SharePoint Search, Microsoft Search, REST-Dokumentsuche | `FileType` | Dateitypen mit Symbol (gruppiert) |
+| SharePoint CAML | `File_x0020_Type` | Dateitypen mit Symbol (gruppiert) |
+| OData / Statische Daten | Feld mit der Dateiendung, z. B. `fileType` | Dateitypen mit Symbol (gruppiert) |
 
 ## Grenzen
 
@@ -78,7 +269,7 @@ Weitere Sprache: `src/loc/en-us.js` nach `src/loc/<locale>.js` kopieren, überse
 2. Commit, Tag und Push:
 
    ```bash
-   git tag v2.3.2
+   git tag v2.3.3
    git push origin main --tags
    ```
 

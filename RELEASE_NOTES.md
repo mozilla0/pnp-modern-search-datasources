@@ -1,8 +1,10 @@
-## PnP Modern Search – Additional data sources 2.3.2
+## PnP Modern Search – Additional data sources 2.3.3
 
 Extensibility library for **PnP Modern Search 4.25.0** (SPFx 1.23.0) with four additional data sources and a grouped file type filter.
 
 ### What's new
+- **Fix:** SharePoint CAML queries that contain only the `<Where>` content are applied correctly.
+- **Docs:** README with examples for every data source.
 - **Fix:** `t.some is not a function` in the result layouts; the built-in sort control now works with all data sources (sortable fields for users).
 - **Fix:** the package now passes app catalog validation (solution name with plain ASCII characters).
 - **User interface in 16 locales**, the same languages as PnP Modern Search: Czech, Danish, German (`de-de`, `de-ch`, `de-at`), English, Spanish, Finnish, French, Italian, Norwegian (Bokmål), Dutch, Polish, Portuguese (Brazil), Swedish. English is the fallback.

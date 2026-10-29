@@ -47,6 +47,8 @@ m365 spo serviceprincipal grant add --resource '<app name>' --scope 'user_impers
 
 ## Configuration
 
+See [Examples](#examples) for ready-to-use configurations of every data source.
+
 ### Common settings (OData, SharePoint CAML, Static data)
 
 | Setting | Description |
@@ -108,6 +110,197 @@ Properties next to `items` are available in custom templates.
 
 In the Search Filters web part, create a filter on the file type field (`FileType` for search, `File_x0020_Type` for CAML) and select the template **File types with icon (grouped)**. Clicking a group selects all of its extensions with OR. Works with every data source, including the built-in "SharePoint Search" and "Microsoft Search". Groups are defined in [`src/common/FileTypeGroups.ts`](src/common/FileTypeGroups.ts).
 
+## Examples
+
+The settings below use the labels shown in the property pane. Settings that are not listed keep their default value.
+
+### REST document search: Office documents and PDFs of the current site collection
+
+Search Results web part, data source **REST document search (SharePoint Search)**:
+
+| Setting | Value |
+| --- | --- |
+| Query template (KQL) | `{searchTerms} IsDocument:1 Path:"{SiteCollection}" (FileType:docx OR FileType:xlsx OR FileType:pptx OR FileType:pdf)` |
+| Default sort | `LastModifiedTime:desc` |
+| Sortable fields for users | `LastModifiedTime,Title` |
+
+Search Filters web part (connected to the results):
+
+| Filter field | Template |
+| --- | --- |
+| `FileType` | File types with icon (grouped) |
+| `LastModifiedTime` | Date interval |
+| `DisplayAuthor` | Checkbox |
+
+Refiner counts are calculated over the whole result set, also for libraries with far more than 5,000 documents.
+
+### OData – SharePoint REST API: items of a list
+
+Data source **OData (Graph, SharePoint REST, API)**:
+
+| Setting | Value |
+| --- | --- |
+| API type | SharePoint REST API |
+| URL | `_api/web/lists/getbytitle('Projects')/items?$select=Id,Title,Status,Customer,Modified,FileRef&$top=500` |
+| HTTP headers (JSON) | `{ "Accept": "application/json;odata=nometadata" }` |
+| Field containing the items | `value` |
+| Paging | Static (load items, page in the browser) |
+| Default sort | `Modified:desc` |
+| Sortable fields for users | `Title,Modified` |
+| Slots: Title / Link / Summary / Date | `Title` / `FileRef` / `Customer` / `Modified` |
+
+Filters on `Status` and `Customer` are applied in the browser, including counts.
+
+### OData – Microsoft Graph: e-mails of the current user
+
+| Setting | Value |
+| --- | --- |
+| API type | Microsoft Graph |
+| URL | `me/messages?$select=subject,bodyPreview,webLink,receivedDateTime,from&$top={itemsCountPerPage}` |
+| Field containing the items | `value` |
+| Paging | Dynamic (one request per page) |
+| Use server paging via nextLink | On |
+| Sortable fields for users | `receivedDateTime,subject` |
+| Slots: Title / Link / Summary / Date / Author | `subject` / `webLink` / `bodyPreview` / `receivedDateTime` / `from.emailAddress.name` |
+
+Required permission: `m365 spo serviceprincipal grant add --resource 'Microsoft Graph' --scope 'Mail.Read'`. The selected sort field is sent as `$orderby`.
+
+### OData – Entra ID secured API (e.g. Azure Function)
+
+| Setting | Value |
+| --- | --- |
+| API type | Entra ID secured API |
+| URL | `https://func-contoso.azurewebsites.net/api/contracts?q={searchTermsOrEmpty}&skip={startRow}&top={itemsCountPerPage}&filter={filter}&orderby={sortField}%20{sortDirection}` |
+| Entra ID resource | `api://11111111-2222-3333-4444-555555555555` |
+| Field containing the items | `items` |
+| Paging | Dynamic (one request per page) |
+| Use server paging via nextLink | Off |
+| Field containing the total count | `total` |
+| Apply filters | Server-side as OData $filter |
+
+Expected response:
+
+```json
+{
+  "total": 1287,
+  "items": [
+    { "id": "C-1001", "title": "Maintenance contract", "status": "Active", "url": "https://…" }
+  ]
+}
+```
+
+A selected filter on `status` is passed as `filter=status eq 'Active'`. The API must allow CORS for the SharePoint domain and the permission `user_impersonation` must be granted (see [Installation](#installation)).
+
+### OData – anonymous API
+
+Public OData demo service, paged via tokens and filtered on the server:
+
+| Setting | Value |
+| --- | --- |
+| API type | Anonymous |
+| URL | `https://services.odata.org/V4/TripPinService/People?$count=true&$top={itemsCountPerPage}&$skip={startRow}` |
+| Field containing the items | `value` |
+| Paging | Dynamic (one request per page) |
+| Use server paging via nextLink | Off |
+| Field containing the total count | `@odata.count` |
+| Apply filters | Server-side as OData $filter |
+| Slots: Title / Summary / ID | `FirstName` / `UserName` / `UserName` |
+
+### SharePoint CAML: Word and PDF files changed in the last 30 days
+
+| Setting | Value |
+| --- | --- |
+| Site | `/sites/dms` |
+| List or library | `/sites/dms/Shared Documents` |
+| Search folders recursively | On |
+| Fields for search terms | `Title,FileLeafRef` |
+| Default sort | *(empty – the `OrderBy` of the CAML is used)* |
+
+CAML:
+
+```xml
+<View>
+  <Query>
+    <Where>
+      <And>
+        <In>
+          <FieldRef Name="File_x0020_Type" />
+          <Values>
+            <Value Type="Text">docx</Value>
+            <Value Type="Text">pdf</Value>
+          </Values>
+        </In>
+        <Geq>
+          <FieldRef Name="Modified" />
+          <Value Type="DateTime"><Today OffsetDays="-30" /></Value>
+        </Geq>
+      </And>
+    </Where>
+    <OrderBy>
+      <FieldRef Name="Modified" Ascending="FALSE" />
+    </OrderBy>
+  </Query>
+</View>
+```
+
+Use a server-relative URL for the library: it works regardless of the site language. For libraries with more than 5,000 items, `Modified` and `File_x0020_Type` must be indexed columns.
+
+### SharePoint CAML: my open tasks
+
+| Setting | Value |
+| --- | --- |
+| List or library | `Tasks` |
+| Fields (view fields, internal names) | `ID,Title,Status,DueDate,AssignedTo` |
+| Slots: Title / Date / Author | `Title` / `DueDate` / `AssignedTo[0].title` |
+
+CAML (only the `Where` content is needed):
+
+```xml
+<And>
+  <Eq>
+    <FieldRef Name="AssignedTo" LookupId="TRUE" />
+    <Value Type="Integer"><UserID /></Value>
+  </Eq>
+  <Neq>
+    <FieldRef Name="Status" />
+    <Value Type="Text">Completed</Value>
+  </Neq>
+</And>
+```
+
+### Static data: quick links with categories
+
+Data source **Static data**:
+
+```json
+{
+  "items": [
+    { "linkName": "Microsoft 365 Admin Center", "linkHref": "https://admin.microsoft.com", "category": "Administration" },
+    { "linkName": "SharePoint Admin Center", "linkHref": "https://admin.microsoft.com/sharepoint", "category": "Administration" },
+    { "linkName": "Microsoft Learn", "linkHref": "https://learn.microsoft.com", "category": "Documentation" },
+    { "linkName": "PnP Modern Search", "linkHref": "https://microsoft-search.github.io/pnp-modern-search/", "category": "Documentation" }
+  ],
+  "numberOfLinks": 4
+}
+```
+
+| Setting | Value |
+| --- | --- |
+| Default sort | `linkName:asc` |
+| Slots: Title / Link / Summary | `linkName` / `linkHref` / `category` |
+
+A Search Filters web part with the filter field `category` adds a category filter. `numberOfLinks` is available in custom templates as `{{numberOfLinks}}`.
+
+### File type filter with any data source
+
+In the Search Filters web part, add the library ID in the extensibility configuration and create a filter:
+
+| Data source | Filter field | Template |
+| --- | --- | --- |
+| SharePoint Search, Microsoft Search, REST document search | `FileType` | File types with icon (grouped) |
+| SharePoint CAML | `File_x0020_Type` | File types with icon (grouped) |
+| OData / Static data | field with the file extension, e.g. `fileType` | File types with icon (grouped) |
+
 ## Limitations
 
 - List REST and CAML queries are subject to the 5,000 item list view threshold unless conditions and sorting use indexed columns.
@@ -146,7 +339,7 @@ src/
 2. Commit, tag and push:
 
    ```bash
-   git tag v2.3.2
+   git tag v2.3.3
    git push origin main --tags
    ```
 
