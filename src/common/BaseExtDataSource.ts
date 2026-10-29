@@ -24,6 +24,7 @@ import {
 } from '@pnp/modern-search-extensibility';
 import { applyClientFilters, applyClientSort, buildFilterResults, ISortSpec } from './ClientDataHelper';
 import { JsonObject } from './JsonPath';
+import { buildSortList, ISortFieldConfiguration } from './SortConfiguration';
 import { format } from './Format';
 import * as strings from 'ExtDataSourcesStrings';
 
@@ -32,6 +33,8 @@ export interface ICommonDataSourceProperties {
   defaultSort: string;
   /** Fields users may sort by in the sort control */
   userSortFields: string;
+  /** Derived from defaultSort/userSortFields; read by the PnP layouts' sort control */
+  sortList: ISortFieldConfiguration[];
   cacheEnabled: boolean;
   cacheMinutes: string;
   noFetchOnLoad: boolean;
@@ -103,10 +106,17 @@ export abstract class BaseExtDataSource<T extends ICommonDataSourceProperties> e
     Object.keys(defaults).forEach(key => {
       if (props[key] === undefined || props[key] === null) { props[key] = defaults[key]; }
     });
+    this.syncSortList();
   }
 
   public onPropertyUpdate(): void {
+    this.syncSortList();
     this.resetState();
+  }
+
+  /** Keeps `sortList` (array expected by the PnP layouts) in sync with the text settings */
+  protected syncSortList(): void {
+    this.properties.sortList = buildSortList(this.properties.defaultSort, this.properties.userSortFields);
   }
 
   public getItemCount(): number {

@@ -19,6 +19,7 @@ import {
 } from '@pnp/modern-search-extensibility';
 import { format } from '../common/Format';
 import * as strings from 'ExtDataSourcesStrings';
+import { buildSortList, ISortFieldConfiguration } from '../common/SortConfiguration';
 
 export interface IRestDocumentSearchProperties {
   /** KQL query template, e.g. "{searchTerms} IsDocument:1" */
@@ -26,7 +27,11 @@ export interface IRestDocumentSearchProperties {
   /** Managed properties, comma-separated */
   selectedProperties: string;
   /** Default sort, e.g. "LastModifiedTime:desc,Title:asc" */
-  sortList: string;
+  defaultSort: string;
+  /** Fields users may sort by in the sort control */
+  userSortFields: string;
+  /** Derived from defaultSort/userSortFields; read by the PnP layouts' sort control */
+  sortList: ISortFieldConfiguration[];
   /** Optional result source (GUID) */
   sourceId: string;
   trimDuplicates: boolean;
@@ -89,7 +94,14 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
   public async onInit(): Promise<void> {
     if (!this.properties.queryTemplate) { this.properties.queryTemplate = DEFAULT_QUERY_TEMPLATE; }
     if (!this.properties.selectedProperties) { this.properties.selectedProperties = DEFAULT_SELECT_PROPERTIES; }
-    if (this.properties.sortList === undefined) { this.properties.sortList = ''; }
+    // Migration: up to 2.3.1 the default sort was stored as text in "sortList"
+    const legacySort: unknown = this.properties.sortList;
+    if (typeof legacySort === 'string' && this.properties.defaultSort === undefined) {
+      this.properties.defaultSort = legacySort;
+    }
+    if (this.properties.defaultSort === undefined) { this.properties.defaultSort = ''; }
+    if (this.properties.userSortFields === undefined) { this.properties.userSortFields = ''; }
+    this._syncSortList();
     if (this.properties.sourceId === undefined) { this.properties.sourceId = ''; }
     if (this.properties.trimDuplicates === undefined) { this.properties.trimDuplicates = false; }
     if (this.properties.enableQueryRules === undefined) { this.properties.enableQueryRules = false; }
@@ -189,7 +201,16 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
   }
 
   public getSortableFields(): string[] {
-    return ['LastModifiedTime', 'Created', 'Title', 'Filename', 'Size', 'Rank'];
+    return this._splitList(this.properties.userSortFields);
+  }
+
+  public onPropertyUpdate(): void {
+    this._syncSortList();
+  }
+
+  /** Keeps `sortList` (array expected by the PnP layouts) in sync with the text settings */
+  private _syncSortList(): void {
+    this.properties.sortList = buildSortList(this.properties.defaultSort, this.properties.userSortFields);
   }
 
   public getTemplateSlots(): ITemplateSlot[] {
@@ -226,9 +247,13 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
             multiline: true,
             rows: 5
           }),
-          PropertyPaneTextField('dataSourceProperties.sortList', {
+          PropertyPaneTextField('dataSourceProperties.defaultSort', {
             label: strings.DefaultSortLabel,
             description: strings.RestSortDescription
+          }),
+          PropertyPaneTextField('dataSourceProperties.userSortFields', {
+            label: strings.UserSortFieldsLabel,
+            description: strings.UserSortFieldsDescription
           }),
           PropertyPaneTextField('dataSourceProperties.sourceId', {
             label: strings.SourceIdLabel
@@ -344,7 +369,7 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
     }
 
     // Default sort from the properties
-    return this._splitList(this.properties.sortList || '').map(entry => {
+    return this._splitList(this.properties.defaultSort || '').map(entry => {
       const parts: string[] = entry.split(':');
       const direction: string = (parts[1] || 'asc').trim().toLowerCase();
       return { Property: parts[0].trim(), Direction: direction === 'desc' ? 1 : 0 };

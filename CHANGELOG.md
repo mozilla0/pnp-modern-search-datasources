@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.2] - 2026-10-29
+
+### Fixed
+- `Uncaught TypeError: t.some is not a function` in the result layouts: `dataSourceProperties.sortList` is now an array of sort field configurations, as expected by the built-in PnP sort control. Configurations stored by earlier versions are migrated automatically.
+
+### Added
+- The sort control of the PnP layouts now shows the "sortable fields for users" of all data sources, including the REST document search.
+
 ## [2.3.1] - 2026-10-29
 
 ### Fixed

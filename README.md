@@ -146,7 +146,7 @@ src/
 2. Commit, tag and push:
 
    ```bash
-   git tag v2.3.1
+   git tag v2.3.2
    git push origin main --tags
    ```
 
