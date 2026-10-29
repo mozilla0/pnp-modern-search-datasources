@@ -1,0 +1,38 @@
+{
+  "name": "pnp-modern-search-datasources",
+  "version": "2.3.0",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.14.0 < 23.0.0"
+  },
+  "scripts": {
+    "build": "heft test --clean --production && heft package-solution --production",
+    "clean": "heft clean",
+    "start": "heft start --clean"
+  },
+  "dependencies": {
+    "@fluentui/react-file-type-icons": "^8.16.0",
+    "@microsoft/sp-core-library": "1.23.0",
+    "@microsoft/sp-http": "1.23.0",
+    "@microsoft/sp-page-context": "1.23.0",
+    "@microsoft/sp-property-pane": "1.23.0",
+    "@pnp/modern-search-extensibility": "2.1.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@microsoft/eslint-config-spfx": "1.23.0",
+    "@microsoft/eslint-plugin-spfx": "1.23.0",
+    "@microsoft/sp-module-interfaces": "1.23.0",
+    "@microsoft/spfx-heft-plugins": "1.23.0",
+    "@microsoft/spfx-web-build-rig": "1.23.0",
+    "@rushstack/heft": "1.2.17",
+    "@types/react": "^17.0.45",
+    "@types/react-dom": "^17.0.17",
+    "@types/webpack-env": "~1.15.2",
+    "eslint": "9.37.0",
+    "typescript": "~5.8.0"
+  }
+}

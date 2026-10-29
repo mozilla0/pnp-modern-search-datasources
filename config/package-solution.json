@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "PnP Modern Search – Zusätzliche Datenquellen",
+    "id": "5b2c34a5-0e35-4528-89cb-fb1d24599dd3",
+    "version": "2.3.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "PnP Modern Search Erweiterung",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.23.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "PnP Modern Search Datenquelle für die Dokumentsuche via SharePoint Search REST API"
+      },
+      "longDescription": {
+        "default": "Erweiterungsbibliothek für PnP Modern Search v4. Stellt eine Datenquelle bereit, die Dokumente über /_api/search/postquery sucht und Verfeinerer serverseitig über den gesamten Index berechnet – ohne 5000-Elemente-Schwellenwert."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "PnP REST-Dokumentsuche",
+        "description": "Erweiterungsbibliothek für PnP Modern Search",
+        "id": "25a45733-1f5c-4338-bff7-d6f8ab2a582f",
+        "version": "2.3.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/pnp-modern-search-datasources.sppkg"
+  }
+}

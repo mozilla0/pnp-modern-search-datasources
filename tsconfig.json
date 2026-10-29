@@ -1,0 +1,12 @@
+{
+  "extends": "./node_modules/@microsoft/spfx-web-build-rig/profiles/default/tsconfig-base.json",
+  "compilerOptions": {
+    "target": "es2017",
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": true,
+    "useUnknownInCatchVariables": false,
+    "lib": ["dom", "es2021"],
+    "ignoreDeprecations": "5.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+    "extends": "@microsoft/spfx-web-build-rig/profiles/default/config/typescript.json",
+    "staticAssetsToCopy": {
+        "fileExtensions": [
+            ".resx"
+        ],
+        "includeGlobs": [
+            "loc/*.js"
+        ]
+    }
+}
