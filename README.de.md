@@ -269,7 +269,7 @@ Weitere Sprache: `src/loc/en-us.js` nach `src/loc/<locale>.js` kopieren, überse
 2. Commit, Tag und Push:
 
    ```bash
-   git tag v2.3.3
+   git tag v2.3.4
    git push origin main --tags
    ```
 

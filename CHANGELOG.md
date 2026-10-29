@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [2.3.4] - 2026-10-29
+
+### Fixed
+- REST document search: the property pane could not be opened after selecting the data source. `dataSourceProperties.selectedProperties` is now an array, as expected by the PnP web part (template slots, columns). Configurations stored by earlier versions are migrated automatically.
+
+### Changed
+- The managed properties of the REST document search are offered in the template slot field picker.
+
 ## [2.3.3] - 2026-10-29
 
 ### Fixed

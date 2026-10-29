@@ -1,8 +1,9 @@
-## PnP Modern Search – Additional data sources 2.3.3
+## PnP Modern Search – Additional data sources 2.3.4
 
 Extensibility library for **PnP Modern Search 4.25.0** (SPFx 1.23.0) with four additional data sources and a grouped file type filter.
 
 ### What's new
+- **Fix:** the property pane can be opened again after selecting the REST document search.
 - **Fix:** SharePoint CAML queries that contain only the `<Where>` content are applied correctly.
 - **Docs:** README with examples for every data source.
 - **Fix:** `t.some is not a function` in the result layouts; the built-in sort control now works with all data sources (sortable fields for users).

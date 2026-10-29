@@ -24,8 +24,10 @@ import { buildSortList, ISortFieldConfiguration } from '../common/SortConfigurat
 export interface IRestDocumentSearchProperties {
   /** KQL query template, e.g. "{searchTerms} IsDocument:1" */
   queryTemplate: string;
-  /** Managed properties, comma-separated */
-  selectedProperties: string;
+  /** Managed properties, comma-separated (edited in the property pane) */
+  selectedPropertiesText: string;
+  /** Managed properties as array; read by the PnP web part (template slots, columns) */
+  selectedProperties: string[];
   /** Default sort, e.g. "LastModifiedTime:desc,Title:asc" */
   defaultSort: string;
   /** Fields users may sort by in the sort control */
@@ -93,7 +95,13 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
 
   public async onInit(): Promise<void> {
     if (!this.properties.queryTemplate) { this.properties.queryTemplate = DEFAULT_QUERY_TEMPLATE; }
-    if (!this.properties.selectedProperties) { this.properties.selectedProperties = DEFAULT_SELECT_PROPERTIES; }
+    // Migration: up to 2.3.3 the managed properties were stored as text in "selectedProperties"
+    const legacyProperties: unknown = this.properties.selectedProperties;
+    if (typeof legacyProperties === 'string' && !this.properties.selectedPropertiesText) {
+      this.properties.selectedPropertiesText = legacyProperties;
+    }
+    if (!this.properties.selectedPropertiesText) { this.properties.selectedPropertiesText = DEFAULT_SELECT_PROPERTIES; }
+    this._syncSelectedProperties();
     // Migration: up to 2.3.1 the default sort was stored as text in "sortList"
     const legacySort: unknown = this.properties.sortList;
     if (typeof legacySort === 'string' && this.properties.defaultSort === undefined) {
@@ -115,7 +123,7 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
       Querytext: this._buildQueryText(dataContext.inputQueryText),
       StartRow: (pageNumber - 1) * rowLimit,
       RowLimit: rowLimit,
-      SelectProperties: this._splitList(this.properties.selectedProperties || DEFAULT_SELECT_PROPERTIES),
+      SelectProperties: this._splitList(this.properties.selectedPropertiesText || DEFAULT_SELECT_PROPERTIES),
       TrimDuplicates: !!this.properties.trimDuplicates,
       EnableQueryRules: !!this.properties.enableQueryRules,
       ClientType: 'PnPModernSearch'
@@ -205,7 +213,13 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
   }
 
   public onPropertyUpdate(): void {
+    this._syncSelectedProperties();
     this._syncSortList();
+  }
+
+  /** Keeps `selectedProperties` (array expected by the PnP web part) in sync with the text setting */
+  private _syncSelectedProperties(): void {
+    this.properties.selectedProperties = this._splitList(this.properties.selectedPropertiesText || DEFAULT_SELECT_PROPERTIES);
   }
 
   /** Keeps `sortList` (array expected by the PnP layouts) in sync with the text settings */
@@ -242,7 +256,7 @@ export class RestDocumentSearchDataSource extends BaseDataSource<IRestDocumentSe
             multiline: true,
             rows: 3
           }),
-          PropertyPaneTextField('dataSourceProperties.selectedProperties', {
+          PropertyPaneTextField('dataSourceProperties.selectedPropertiesText', {
             label: strings.SelectedPropertiesLabel,
             multiline: true,
             rows: 5
